@@ -69,7 +69,9 @@ var pJS = function(tag_id, params){
         distance: 100,
         color: '#fff',
         opacity: 1,
-        width: 1
+        width: 1,
+        lights: true,
+        map: {}
       },
       move: {
         enable: true,
@@ -699,12 +701,59 @@ var pJS = function(tag_id, params){
         pJS.canvas.ctx.stroke();
         pJS.canvas.ctx.closePath();
 
+        if(Object.getOwnPropertyNames(pJS.particles.line_linked.map).length === 0) {
+          pJS.particles.line_linked.map[p1] = [p2, 0];
+        } else {
+          if (pJS.particles.line_linked.map[p1] && pJS.particles.line_linked.map[p1][0] === p2) {
+            if (pJS.particles.line_linked.map[p1][1] >= 1) {
+              delete pJS.particles.line_linked.map[p1];
+            } else {
+              pJS.particles.line_linked.map[p1][1] = 0.002 + pJS.particles.line_linked.map[p1][1];
+              pJS.fn.interact.linkLights(p1, p2, pJS.particles.line_linked.map[p1][1]);
+            }
+          }
+        }
       }
 
     }
 
   };
 
+  pJS.fn.interact.linkLights = function(p1, p2, ratio) {
+    // console.log(ratio);
+    var dx = p1.x - p2.x,
+      dy = p1.y - p2.y,
+      dist = Math.sqrt(dx * dx + dy * dy) * ratio;
+
+    if (dist <= pJS.particles.line_linked.distance) {
+      var opacity_line = pJS.particles.line_linked.opacity - (dist / (1 / pJS.particles.line_linked.opacity)) / pJS.particles.line_linked.distance;
+
+      if (opacity_line > 0) {
+
+        /* style */
+        var color_line = pJS.particles.line_linked.color_rgb_line;
+        // pJS.canvas.ctx.strokeStyle = 'rgba(' + color_line.r + ',' + color_line.g + ',' + color_line.b + ',' + opacity_line + ')';
+        pJS.canvas.ctx.strokeStyle = 'rgba(255, 255, 255)';
+        pJS.canvas.ctx.lineWidth = 5;
+        //pJS.canvas.ctx.lineCap = 'round'; /* performance issue */
+
+        /* path */
+        var p = 1 - dist / pJS.particles.line_linked.distance;
+        var new_x = p1.x + ratio * (p2.x - p1.x);
+        var new_y = p1.y + ratio * (p2.y - p1.y);
+        // for (var i in 10) {
+        pJS.canvas.ctx.beginPath();
+        pJS.canvas.ctx.moveTo(p1.x, p1.y);
+        pJS.canvas.ctx.lineTo(new_x, new_y);
+        // pJS.canvas.ctx.lineTo(p2.x - range_x * p, p2.y - range_y  * p);
+        pJS.canvas.ctx.stroke();
+        pJS.canvas.ctx.closePath();
+        // }
+        // console.log(pJS.particle.array);
+
+      }
+    }
+  };
 
   pJS.fn.interact.attractParticles  = function(p1, p2){
 
